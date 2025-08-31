@@ -1,166 +1,192 @@
-# slowfolio — MVP 仕様書（Daily 1 枚版）
+# 📖 slowfolio
 
-## 🎯 目的
+**slowfolio** は「1 日 1 枚のポストカード」を積み上げていく、スローなインターネットのためのミニマルアルバムです。
+Google フォトや「みてね」などの“貯蔵庫”とは別に、**選んだ 1 枚に物語を添えて見せる**ことを目的としています。
 
-- 毎日 1 枚、その日のハイライトを **ポストカード風カード** として残す。
-- カードは **プライベート公開**（家族向け）が基本。必要に応じて **パブリック公開**も可能。
-- 写真貯蔵は Google フォトやみてねなどに任せ、\*\*slowfolio は「見せる場」\*\*に特化する。
-- 将来的に 1 ヶ月・1 年のまとめ（アルバム/ブック化）や PNG 化にも拡張できる。
-
----
-
-## ✅ 要求（What）
-
-1. **表現**
-
-   - 1 日 1 枚のポストカード（縦長キャンバス）。
-   - 写真 1 枚＋短文（タイトル＋本文＋フッター）。
-   - **シンプルで落ち着いたデザイン**、スクショして LINE でも共有可。
-
-2. **運用単位**
-
-   - 1 日 = 1 カード。
-   - カード作成を「日課」として運用（必ずしも当日撮影でなくても OK）。
-   - 将来拡張として「日付＋ suffix」で例外カード（旅行など）も追加可能。
-
-3. **公開範囲**
-
-   - デフォルトは **private/** 配下 → Cloudflare Access で保護。
-   - 公開したいものだけ **cards/** 配下に置いてパブリック公開。
-
-4. **将来拡張**
-
-   - カード PNG 化（URL→ 画像化）。
-   - YAML/CLI から自動生成。
-   - 月別/年別アーカイブ。
+- 📸 **写真 + 短い文章** をカード化
+- 🔒 **Private (家族向け)** と 🌍 **Public (公開用)** を切替可能
+- 🖼 スマホで見やすく、スクショ 1 枚で共有できる
+- 🖨 将来的に印刷用（L 判比率）や PNG 化にも対応
 
 ---
 
-## 🛠 技術要件
+## 🛠 セットアップ
 
-- **ビルド**: Hugo (v0.126 想定)
-- **ホスティング**: Cloudflare Pages
+### 1. 環境
 
-  - Build command: `hugo`
-  - Output directory: `public`
+- Hugo (>= 0.126 推奨)
+- Node.js (>= 18, Playwright 使用時)
+- Git
 
-- **認証**: Cloudflare Access
+### 2. インストール
 
-  - 対象: `/private/*`
-  - ログイン: Google アカウント or メール OTP
+```bash
+git clone <this-repo> slowfolio
+cd slowfolio/site
+hugo server -D
+```
+
+ブラウザで `http://localhost:1313/private/cards/YYYY-MM-DD/` を開くとカードが見られます。
 
 ---
 
-## 📂 ディレクトリ構成（MVP）
+## 📂 ディレクトリ構成
 
 ```
-site/
-  content/
-    cards/                  # 公開用
-      2025-09-02/
-        index.md
-        photo.jpg
-    private/
-      cards/                # 非公開用
-        2025-09-03/
+slowfolio/
+  site/
+    hugo.toml
+    content/
+      cards/              # 公開カード
+        2025-09-01/
           index.md
           photo.jpg
+      private/
+        cards/            # 非公開カード（デフォルト）
+          2025-09-02/
+            index.md
+            photo.jpg
+    layouts/
+      shortcodes/postcard.html
+      _default/single.html
+    assets/css/story.css
+  tools/
+    export-card.mjs       # PNGエクスポートスクリプト
 ```
 
-- **1 日 1 枚前提** → ディレクトリ名は `YYYY-MM-DD`
-- 同一構造で `cards/` or `private/cards/` に置き分けるだけで公開/非公開を切替可能
+- **private/cards/** … デフォルトの置き場（家族向け）。Cloudflare Access などで保護。
+- **cards/** … 公開用。誰でも閲覧可。
 
 ---
 
-## 🎨 表現仕様（ポストカード短コード）
+## ✍️ カードの作り方
 
-### ショートコード `postcard`
+1. 日付フォルダを作成
 
-- **パラメータ**:
+   ```bash
+   mkdir -p site/content/private/cards/2025-09-02
+   ```
 
-  - `photo`: 表示画像
-  - `title`: 見出し
-  - `body`: 本文（Markdown 可）
-  - `footer`: 日付や場所など
-  - `ratio`: 1080x1350（標準） / 1200x1200
-  - `pad`: none|sm|md|lg
+2. 写真を配置
 
-### Markdown 例
+   ```
+   site/content/private/cards/2025-09-02/beach.jpg
+   ```
 
-`site/content/private/cards/2025-09-03/index.md`
+3. `index.md` を作成
 
-```markdown
----
-title: "海、はじまりの一枚"
-date: 2025-09-03
-summary: "波の音と笑い声。最初の一歩。"
----
+   ```markdown
+   ---
+   title: "海、はじまりの一枚"
+   date: 2025-09-02
+   summary: "波の音と笑い声。"
+   ---
 
-{{< postcard
-photo="beach.jpg"
-title="海、はじまりの一枚"
-body="波の音と笑い声。最初の一歩だけで、一日が決まる感じ。"
-footer="2025.09.03 / 逗子"
-ratio="1080x1350"
-pad="md"
+   {{< postcard
+   photo="beach.jpg"
+   title="海、はじまりの一枚"
+   footer="2025.09.02 / 逗子"
+   ratio="insta" # insta=4:5（デフォ）, l=3:2（印刷用）
+   pad="md"
 
-> }}
-```
+   > }}
+   > 今日の一枚をここに書く。  
+   > 行末スペース 2 つで改行もできる。
+
+   空行で段落分けも可能。
+   {{< /postcard >}}
+   ```
+
+4. プレビュー
+
+   ```bash
+   cd site
+   hugo server -D
+   ```
+
+   → `http://localhost:1313/private/cards/2025-09-02/` にアクセス
 
 ---
 
 ## 🔐 公開ポリシー
 
-- **プライベート**: `content/private/cards/YYYY-MM-DD/` → `/private/cards/YYYY-MM-DD/`
+- **プライベート**: `content/private/cards/` → `/private/cards/`
 
-  - Cloudflare Access で保護（Google / OTP）。
+  - Cloudflare Access で `/private/*` を保護（Google ログイン or メール OTP）。
 
-- **パブリック**: `content/cards/YYYY-MM-DD/` → `/cards/YYYY-MM-DD/`
+- **パブリック**: `content/cards/` → `/cards/`
 
-  - 誰でも閲覧可能。
+  - 誰でも閲覧可。
 
-- 公開化は **ディレクトリを移動するだけ**。
-
----
-
-## 📝 ワークフロー
-
-1. その日のハイライトを選ぶ
-2. `content/private/cards/YYYY-MM-DD/` に写真と `index.md` を作成
-3. Git push → Cloudflare Pages 自動ビルド・デプロイ
-4. 家族へ URL 送信（初回は Access でログイン）
-5. 公開にしたい場合は `content/cards/` へ移動して再デプロイ
+- 公開化は **フォルダを `private/` → `cards/` に移動**するだけ。
 
 ---
 
-## 🚀 将来仕様（拡張）
+## 🖼 PNG エクスポート（ローカルのみ）
 
-- **カード PNG 化**:
+1. 依存インストール
 
-  - Cloudflare Workers or CLI で URL→PNG レンダリング
+   ```bash
+   npm i -D playwright
+   npx playwright install chromium
+   ```
 
-- **自動生成**:
+2. コマンド実行
 
-  - `config/daily.yaml` から `slowfolio-cli` が `index.md` を吐く
+   ```bash
+   node tools/export-card.mjs \
+     --slug 2025-09-02 \
+     --scope private \
+     --site site \
+     --scale 2 \
+     --out exports/2025-09-02.png
+   ```
 
-- **アーカイブ**:
+   - `--slug` = フォルダ名（例: `2025-09-02`）
+   - `--scope private|cards` = 非公開/公開のどちらを見るか
+   - `--scale` = 解像度倍率（2 or 3 推奨）
+   - `--out` = 出力ファイルパス
 
-  - 月別/年別一覧ページの自動生成
-
-- **テーマ**:
-
-  - 色・フォントを選べる（今は落ち着いたベーシック）
+   → `exports/2025-09-02.png` が生成されます。LINE や SNS に直接貼れる。
 
 ---
 
-## ✅ 受け入れ条件
+## ⚙️ パラメータ一覧
 
-- 1 日 1 カードが **Markdown ＋写真**で作成できる
-- `/private/cards/YYYY-MM-DD/` はログインしないと閲覧不可
-- `/cards/YYYY-MM-DD/` は誰でも閲覧可能
-- スマホで開いたとき、**1 スクショでカードが綺麗に収まる**
+ショートコード `postcard` のパラメータ：
+
+| パラメータ | 値                                             | 説明                                             |
+| ---------- | ---------------------------------------------- | ------------------------------------------------ |
+| `photo`    | ファイル名                                     | index.md と同じフォルダに置いた画像              |
+| `title`    | 文字列                                         | カードの見出し                                   |
+| `footer`   | 文字列                                         | 日付や場所                                       |
+| `ratio`    | `insta` / `square` / `l`                       | insta=4:5（デフォ）、square=1:1、l=3:2（印刷用） |
+| `pad`      | `none`/`sm`/`md`/`lg`                          | 内側余白                                         |
+| `fit`      | `cover` / `contain`                            | cover=切り抜き、contain=全体表示                 |
+| `focus`    | `center` / `top` / `bottom` / `left` / `right` | cover 時の焦点位置                               |
+| `bg`       | CSS 色                                         | contain 時の余白色                               |
+
+本文はショートコードの内側に Markdown で記述できます。
 
 ---
 
-これで「slowfolio = 毎日 1 枚のポストカードを積み上げる場所」という軸が明確になります。
-📌 将来的な柔軟性は残しつつ、MVP では **“日々の 1 枚”** にフォーカスしてシンプルに始める形です。
+## ✅ 運用フロー（MVP）
+
+1. その日の 1 枚を選んで `private/cards/YYYY-MM-DD/` に追加
+2. Hugo で確認
+3. 家族に URL or PNG を共有
+4. 公開したいときは `cards/` に移動
+
+---
+
+## 🚀 今後の拡張アイデア
+
+- 月別・年別アーカイブ自動生成
+- OGP 画像の自動生成
+- CLI ツール化（YAML からカード生成）
+- SaaS 化（ストレージは各自、配置は YAML push で生成）
+
+---
+
+これで「slowfolio = 1 日 1 枚のポストカード」を運用開始できます。
+📌 プライベート運用から始めて、公開や印刷も後から拡張できる設計です。
