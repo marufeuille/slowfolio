@@ -1,0 +1,25 @@
+{
+  "name": "photo_album",
+  "version": "1.0.0",
+  "description": "- 毎日 1 枚、その日のハイライトを **ポストカード風カード** として残す。 - カードは **プライベート公開**（家族向け）が基本。必要に応じて **パブリック公開**も可能。 - 写真貯蔵は Google フォトやみてねなどに任せ、\\*\\*slowfolio は「見せる場」\\*\\*に特化する。 - 将来的に 1 ヶ月・1 年のまとめ（アルバム/ブック化）や PNG 化にも拡張できる。",
+  "main": "index.js",
+  "scripts": {
+    "build:export": "hugo -s site -D -d public_export",
+    "export:card": "node tools/export-card.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marufeuille/slowfolio.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/marufeuille/slowfolio/issues"
+  },
+  "homepage": "https://github.com/marufeuille/slowfolio#readme",
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}

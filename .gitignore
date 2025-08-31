@@ -32,3 +32,5 @@ content/albums/*/*.md
 # - Generated album order data
 data/albums/
 content/
+exports/
+public_export/
