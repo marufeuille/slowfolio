@@ -1,6 +1,6 @@
-# Story Album (Hugo)
+# Slowfolio (Hugo)
 
-要求に合わせた、Markdownベースのフォトストーリーサイトのひな形です。
+Slowfolio は、写真と文章で「ゆっくり楽しむ」フォトストーリーを作るための静的サイト（Hugo）テンプレートです。
 
 ## できること
 
@@ -31,6 +31,20 @@
 - 「module "" not found … themes」エラーが出る場合:
   - `hugo.toml` の `theme` 設定を削除済みです（テーマは使いません）。
   - もし手元に古い設定が残っていれば、`theme = "..."` 行を削除して再起動してください。
+
+## 自動化（Makefile）
+
+- 前提: Hugo と Node がインストール済み
+- よく使うターゲット:
+  - `make gen ALBUM_KEYS=trip-2024` 选定アルバムのみ生成
+  - `make gen-all` すべてのストーリー（`data/stories/*.yaml|json`）を生成
+  - `make serve` 生成 → `hugo server -D`
+  - `make build` 生成 → `hugo --minify`（出力先: `public/`）
+  - `make deploy` `public/` を Cloudflare Pages へデプロイ（`wrangler` 必要、`PROJECT` でプロジェクト名指定）
+
+Cloudflare Pages へのデプロイ（任意）
+- 事前に `npx wrangler login` で認証しておくか、CI環境では `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` を設定してください。
+- プロジェクト名は `make deploy PROJECT=<your-project>` で指定可能（デフォルト: `slowfolio`）。
 
 ## 章ごと別ページを YAML から自動生成
 

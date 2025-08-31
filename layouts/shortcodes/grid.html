@@ -1,0 +1,12 @@
+{{/* Usage:
+{{< grid cols="3" >}}
+  {{< photo src="/path/a.jpg" caption="a" >}}
+  {{< photo src="/path/b.jpg" caption="b" >}}
+  {{< photo src="/path/c.jpg" caption="c" >}}
+{{< /grid >}}
+*/}}
+{{ $cols := .Get "cols" | default "3" }}
+<div class="grid cols-{{ $cols }}">
+  {{ .Inner }}
+  </div>
+

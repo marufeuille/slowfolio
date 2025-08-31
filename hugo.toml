@@ -1,0 +1,19 @@
+baseURL = "/"
+languageCode = "ja"
+title = "Slowfolio"
+
+[params]
+  author = ""
+  description = "Slowfolio — 写真と物語をゆっくり楽しむアルバム"
+  dateFormat = "2006-01-02"
+  pagerReverse = false
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    noClasses = false
+
+[pagination]
+  pagerSize = 10

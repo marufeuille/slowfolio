@@ -1,0 +1,73 @@
+{{ define "main" }}
+  {{/* Determine section/site gate settings */}}
+  {{ $sectionHash := cond (ne .CurrentSection nil) .CurrentSection.Params.gateHash nil }}
+  {{ $hash := .Params.gateHash | default $sectionHash | default .Site.Params.gateHash }}
+  {{ $hint := .Params.gateHint | default (cond (ne .CurrentSection nil) .CurrentSection.Params.gateHint nil) | default .Site.Params.gateHint }}
+
+  <article class="content{{ if $hash }} gate gate--page{{ end }}" {{ if $hash }}data-gate-hash="{{ $hash }}"{{ end }}>
+    {{ if $hash }}
+      <div class="gate__form">
+        <p>このページはパスワードで保護されています。</p>
+        <form>
+          <input type="password" placeholder="パスワード" aria-label="パスワード" />
+          <button type="submit">開く</button>
+          {{ with $hint }}<div class="gate__hint">ヒント: {{ . }}</div>{{ end }}
+          <div data-invalid style="color:#b00020;margin-top:6px"></div>
+          <noscript>JavaScriptを有効にしてください。</noscript>
+        </form>
+      </div>
+      <div class="gate__content">
+    {{ end }}
+
+    <header class="page-header">
+      <h1 class="title">{{ .Title }}</h1>
+      {{ with .Params.subtitle }}<p class="subtitle">{{ . }}</p>{{ end }}
+    </header>
+    <div class="prose">
+      {{ .Content }}
+    </div>
+    {{/* Pager: strictly from data/albums <key>.yaml if present; else filename order */}}
+    {{ $s := newScratch }}
+    {{ $pagesAll := .CurrentSection.RegularPages }}
+    {{ $ordered := slice }}
+    {{ $key := .CurrentSection.Params.key }}
+    {{ if and $key (index .Site.Data.albums $key) }}
+      {{ with (index .Site.Data.albums $key).order }}
+        {{ range . }}
+          {{ $name := . }}
+          {{ range $p := $pagesAll }}
+            {{ if eq $name $p.File.BaseFileName }}
+              {{ $ordered = $ordered | append $p }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+    {{ if not (gt (len $ordered) 0) }}
+      {{ $ordered = (sort $pagesAll "File.BaseFileName") }}
+    {{ end }}
+    {{/* locate current by BaseFileName to avoid URL quirks */}}
+    {{ $currName := .File.BaseFileName }}
+    {{ range $i, $p := $ordered }}
+      {{ if eq $p.File.BaseFileName $currName }}
+        {{ if gt $i 0 }}{{ $s.Set "prev" (index $ordered (sub $i 1)) }}{{ end }}
+        {{ if lt (add $i 1) (len $ordered) }}{{ $s.Set "next" (index $ordered (add $i 1)) }}{{ end }}
+      {{ end }}
+    {{ end }}
+    {{ if .Site.Params.pagerReverse }}
+      {{ $s.Set "left" ($s.Get "next") }}
+      {{ $s.Set "right" ($s.Get "prev") }}
+    {{ else }}
+      {{ $s.Set "left" ($s.Get "prev") }}
+      {{ $s.Set "right" ($s.Get "next") }}
+    {{ end }}
+    <nav class="pager">
+      {{ with $s.Get "left" }}<a class="prev" href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ end }}
+      {{ with $s.Get "right" }}<a class="next" href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ end }}
+    </nav>
+
+    {{ if $hash }}
+      </div>
+    {{ end }}
+  </article>
+{{ end }}

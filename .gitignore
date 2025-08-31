@@ -1,0 +1,33 @@
+# Hugo build outputs
+public/
+resources/
+resources/_gen/
+.hugo_build.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node tooling (if used locally)
+node_modules/
+
+# Caches and temps
+.cache/
+tmp/
+*.log
+*.tmp
+
+# IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+
+# Env files (if any)
+.env
+.env.*
+
+# Generated content (from scripts/generate.mjs)
+# - Chapter markdown under albums
+content/albums/*/*.md
+# - Generated album order data
+data/albums/

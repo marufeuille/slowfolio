@@ -1,0 +1,88 @@
+{{ define "main" }}
+  {{ $sectionHash := cond (ne .CurrentSection nil) .CurrentSection.Params.gateHash nil }}
+  {{ $hash := .Params.gateHash | default $sectionHash | default .Site.Params.gateHash }}
+  {{ $hint := .Params.gateHint | default (cond (ne .CurrentSection nil) .CurrentSection.Params.gateHint nil) | default .Site.Params.gateHint }}
+
+  <article class="content{{ if $hash }} gate gate--page{{ end }}" {{ if $hash }}data-gate-hash="{{ $hash }}"{{ end }}>
+    {{ if $hash }}
+      <div class="gate__form">
+        <p>このページはパスワードで保護されています。</p>
+        <form>
+          <input type="password" placeholder="パスワード" aria-label="パスワード" />
+          <button type="submit">開く</button>
+          {{ with $hint }}<div class="gate__hint">ヒント: {{ . }}</div>{{ end }}
+          <div data-invalid style="color:#b00020;margin-top:6px"></div>
+          <noscript>JavaScriptを有効にしてください。</noscript>
+        </form>
+      </div>
+      <div class="gate__content">
+    {{ end }}
+    <h1 class="title">{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+
+    {{ if .IsHome }}
+      <section class="album-list">
+        <h2>アルバム</h2>
+        <ul class="cards">
+          {{ range .Site.Sections.ByTitle }}
+            {{ if eq .Section "albums" }}
+              {{ range .Sections.ByWeight }}
+                <li>
+                  <a href="{{ .RelPermalink }}" class="card">
+                    <h3>{{ .Title }}</h3>
+                    {{ with .Params.summary }}<p>{{ . }}</p>{{ end }}
+                  </a>
+                </li>
+              {{ end }}
+            {{ end }}
+          {{ end }}
+        </ul>
+      </section>
+    {{ else }}
+      {{ if .IsSection }}
+        {{/* Only render story view when explicit storyKey is present */}}
+        {{ $storyKey := .Params.storyKey }}
+        {{ if and $storyKey (index .Site.Data.stories $storyKey) }}
+          {{ partial "story.html" (dict "key" $storyKey "Site" .Site) }}
+        {{ else }}
+          <section class="chapter-list">
+            <ul class="timeline">
+              {{ $pagesAll := .Pages }}
+              {{ $pages := sort $pagesAll "File.BaseFileName" }}
+              {{ $akey := .Params.key }}
+              {{ if $akey }}
+                {{ with (index .Site.Data.albums $akey) }}
+                  {{ with .order }}
+                    {{ $ordered := slice }}
+                    {{ range . }}
+                      {{ $name := . }}
+                      {{ range $pagesAll }}
+                        {{ if eq $name .File.BaseFileName }}
+                          {{ $ordered = $ordered | append . }}
+                        {{ end }}
+                      {{ end }}
+                    {{ end }}
+                    {{ if gt (len $ordered) 0 }}{{ $pages = $ordered }}{{ end }}
+                  {{ end }}
+                {{ end }}
+              {{ end }}
+              {{ range $pages }}
+                <li>
+                  <a href="{{ .RelPermalink }}">
+                    <span class="when">{{ .Date | time.Format (.Site.Params.dateFormat | default "2006-01-02") }}</span>
+                    <span class="title">{{ .Title }}</span>
+                  </a>
+                  {{ with .Params.summary }}<p>{{ . }}</p>{{ end }}
+                </li>
+              {{ end }}
+            </ul>
+          </section>
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    {{ if $hash }}
+      </div>
+    {{ end }}
+  </article>
+{{ end }}

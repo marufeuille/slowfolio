@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>{{ if .Title }}{{ .Title }} — {{ end }}{{ .Site.Title }}</title>
+    {{ with .Site.Params.description }}<meta name="description" content="{{ . }}">{{ end }}
+    <link rel="preload" href="/css/main.css" as="style" />
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">{{ .Site.Title }}</a>
+        <nav class="nav">
+          <a href="/">ホーム</a>
+        </nav>
+      </div>
+    </header>
+    <main class="site-main wrap">
+      {{ block "main" . }}{{ end }}
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <small>© {{ now.Format "2006" }} {{ .Site.Params.author }}</small>
+      </div>
+    </footer>
+    <script src="/js/gate.js" defer></script>
+  </body>
+  </html>
+

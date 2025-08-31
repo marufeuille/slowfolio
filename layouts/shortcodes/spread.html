@@ -1,0 +1,19 @@
+{{/* Usage:
+{{< spread image="/path/img.jpg" side="left|right" alt="" caption="" >}}
+本文テキスト（マークダウンOK）
+{{< /spread >}}
+*/}}
+{{ $image := .Get "image" }}
+{{ $alt := .Get "alt" | default "" }}
+{{ $caption := .Get "caption" }}
+{{ $side := .Get "side" | default "left" }}
+<section class="spread{{ if eq $side "right" }} spread--right{{ end }}">
+  <div class="spread__image">
+    <img src="{{ $image }}" alt="{{ $alt }}" loading="lazy"/>
+    {{ with $caption }}<div class="spread__caption">{{ . }}</div>{{ end }}
+  </div>
+  <div class="spread__text">
+    {{ .Inner | markdownify }}
+  </div>
+</section>
+

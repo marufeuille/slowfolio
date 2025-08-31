@@ -1,0 +1,27 @@
+{{/* Usage:
+Wrap any content to protect with a simple passphrase gate.
+Generate a SHA-256 hex of your passphrase and set it as `hash`.
+
+Example (hash for passphrase "family123"):
+{{< gate hash="a63a6c3f0bc1c6c2a6d2f0a94ef..." hint="家族だけの合言葉" >}}
+  ここに守りたいコンテンツ
+{{< /gate >}}
+*/}}
+{{ $hash := .Get "hash" }}
+{{ $hint := .Get "hint" }}
+<div class="gate" data-gate-hash="{{ $hash }}">
+  <div class="gate__form">
+    <p>このコンテンツはパスワードで保護されています。</p>
+    <form>
+      <input type="password" placeholder="パスワード" aria-label="パスワード" />
+      <button type="submit">開く</button>
+      {{ with $hint }}<div class="gate__hint">ヒント: {{ . }}</div>{{ end }}
+      <div data-invalid style="color:#b00020;margin-top:6px"></div>
+      <noscript>JavaScriptを有効にしてください。</noscript>
+    </form>
+  </div>
+  <div class="gate__content">
+    {{ .Inner }}
+  </div>
+  </div>
+
