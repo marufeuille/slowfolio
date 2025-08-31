@@ -1,19 +1,7 @@
 baseURL = "/"
 languageCode = "ja"
-title = "Slowfolio"
+title = "slowfolio"
+# テーマ不要（プレーン）。PaperMod等に差し替える場合は baseof.html を調整。
 
 [params]
-  author = ""
-  description = "Slowfolio — 写真と物語をゆっくり楽しむアルバム"
-  dateFormat = "2006-01-02"
-  pagerReverse = false
-
-[markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      unsafe = true
-  [markup.highlight]
-    noClasses = false
-
-[pagination]
-  pagerSize = 10
+  defaultTheme = "auto"

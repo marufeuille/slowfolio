@@ -1,282 +1,166 @@
-# Slowfolio (Hugo)
+# slowfolio — MVP 仕様書（Daily 1 枚版）
 
-Slowfolio は、写真と文章で「ゆっくり楽しむ」フォトストーリーを作るための静的サイト（Hugo）テンプレートです。
+## 🎯 目的
 
-## できること
+- 毎日 1 枚、その日のハイライトを **ポストカード風カード** として残す。
+- カードは **プライベート公開**（家族向け）が基本。必要に応じて **パブリック公開**も可能。
+- 写真貯蔵は Google フォトやみてねなどに任せ、\*\*slowfolio は「見せる場」\*\*に特化する。
+- 将来的に 1 ヶ月・1 年のまとめ（アルバム/ブック化）や PNG 化にも拡張できる。
 
-- ストーリー性ある章立て（前後ナビ、タイムライン）
-- 簡易レイアウト短縮記法（shortcodes）
-  - `photo` 1枚＋キャプション
-  - `grid` 複数枚の等幅グリッド
-  - `mosaic`/`tile` モザイク状配置（任意のスパン）
-  - `spread` 見開き（写真＋本文）
-  - `spacer` 任意余白
-  - `gate` 簡易パスワードゲート（限定公開用）
-- モバイル最適化（レスポンシブ）
+---
 
-## 起動手順（最初から）
+## ✅ 要求（What）
 
-1) Hugo のインストール
-- macOS: `brew install hugo`
-- 確認: `hugo version`
+1. **表現**
 
-2) このディレクトリで開発サーバを起動
-- `hugo server -D`
-- ブラウザ: http://localhost:1313
+   - 1 日 1 枚のポストカード（縦長キャンバス）。
+   - 写真 1 枚＋短文（タイトル＋本文＋フッター）。
+   - **シンプルで落ち着いたデザイン**、スクショして LINE でも共有可。
 
-3) 画像を配置
-- `static/albums/<album>/` に写真を置き、Markdown からは `/albums/<album>/<file>.jpg` と書きます。
+2. **運用単位**
 
-トラブルシュート
-- 「module "" not found … themes」エラーが出る場合:
-  - `hugo.toml` の `theme` 設定を削除済みです（テーマは使いません）。
-  - もし手元に古い設定が残っていれば、`theme = "..."` 行を削除して再起動してください。
+   - 1 日 = 1 カード。
+   - カード作成を「日課」として運用（必ずしも当日撮影でなくても OK）。
+   - 将来拡張として「日付＋ suffix」で例外カード（旅行など）も追加可能。
 
-## 自動化（Makefile）
+3. **公開範囲**
 
-- 前提: Hugo と Node がインストール済み
-- よく使うターゲット:
-  - `make gen ALBUM_KEYS=trip-2024` 选定アルバムのみ生成
-  - `make gen-all` すべてのストーリー（`data/stories/*.yaml|json`）を生成
-  - `make serve` 生成 → `hugo server -D`
-  - `make build` 生成 → `hugo --minify`（出力先: `public/`）
-  - `make deploy` `public/` を Cloudflare Pages へデプロイ（`wrangler` 必要、`PROJECT` でプロジェクト名指定）
+   - デフォルトは **private/** 配下 → Cloudflare Access で保護。
+   - 公開したいものだけ **cards/** 配下に置いてパブリック公開。
 
-Cloudflare Pages へのデプロイ（任意）
-- 事前に `npx wrangler login` で認証しておくか、CI環境では `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` を設定してください。
-- プロジェクト名は `make deploy PROJECT=<your-project>` で指定可能（デフォルト: `slowfolio`）。
+4. **将来拡張**
 
-## 章ごと別ページを YAML から自動生成
+   - カード PNG 化（URL→ 画像化）。
+   - YAML/CLI から自動生成。
+   - 月別/年別アーカイブ。
 
-- コンセプト: 「1ページ=1レイアウト」。レイアウトを選び、必要枚数の写真とコメントを指定するだけで `.md` を生成します。
-- 入力は YAML（`.yaml`）。JSON も読めますが YAML を推奨します。
+---
 
-1) ストーリーデータを用意
-- 例: `data/stories/trip-2024.yaml`（このリポジトリにサンプル済み。JSONも同名で存在しますがYAMLでOK）
-- 構造:
-  - `title`, `summary`
-  - `chapters[]`: `{ slug, title, layout, photos[], text, gateHash?, gateHint? }`
-  - レイアウト: `one | two-grid | three-grid | four-grid | spread-left | spread-right`
+## 🛠 技術要件
 
-2) 生成コマンド
-- `node scripts/generate.mjs --key trip-2024`
-- 出力: `content/albums/trip-2024/_index.md`（存在しない場合）と各章 `NN-<slug>.md`
-- 章順は YAML の並び順。`data/albums/trip-2024.yaml` が自動生成され、タイムラインとページャがその順に従います。
+- **ビルド**: Hugo (v0.126 想定)
+- **ホスティング**: Cloudflare Pages
 
-3) 補足
-- JSON 版ファイルがあっても、同名の YAML が優先されます。
+  - Build command: `hugo`
+  - Output directory: `public`
 
-レイアウトと生成されるMarkdownの対応
-- `one`: 1枚 +（任意で本文）→ `photo`
-- `two-grid`: 2枚グリッド → `grid` 2列
-- `three-grid`: 3枚グリッド → `grid` 3列
-- `four-grid`: 4枚グリッド → `grid` 4列
-- `spread-left/right`: 見開き（写真＋本文） → `spread`
-- 章単位の簡易ゲート: `gateHash`/`gateHint`（章全体を `gate` でラップ）
+- **認証**: Cloudflare Access
 
-## YAML の書き方（スキーマと例）
+  - 対象: `/private/*`
+  - ログイン: Google アカウント or メール OTP
 
-- ルート
-  - `title`: アルバム名
-  - `summary`: 説明（任意）
-  - `chapters[]`: 章の配列（並び順=章順）
-- 章（chapter）
-  - `slug`: ページのスラッグ（ファイル名にも使われる）
-  - `title`: 章タイトル
-  - `layout`: 下記のいずれか
-    - `one | two-grid | three-grid | four-grid | spread-left | spread-right`
-  - `photos[]`: 使用写真（必要枚数分）
-    - `src`: 画像パス（例 `/albums/<key>/photo.jpg`）
-    - `alt`: 代替テキスト（任意）
-    - `caption`: キャプション（任意）
-  - `text`: 本文（任意、複数行可）
-  - `gateHash`, `gateHint`: 章単位の簡易ゲート（任意）
+---
 
-例（3章）
-```yaml
-title: 夏の友人旅行 2024
-summary: 海と山、ゆっくり流れる時間を記録した旅のアルバム。
-chapters:
-  - slug: prologue
-    title: 序章 — 集合と出発
-    layout: spread-left
-    text: |
-      車に乗り込む前に、コンビニで温かいコーヒーを買った…
-    photos:
-      - src: /albums/trip-2024/meet.jpg
-        alt: 朝の集合
-        caption: まだ眠そうだけど、わくわくが勝つ朝。
-  - slug: seaside
-    title: 第一章 — 海辺の昼下がり
-    layout: three-grid
-    text: 砂浜に足跡を残しながら、潮の香りを吸い込む。
-    photos:
-      - src: /albums/trip-2024/a.jpg
-        caption: 貝殻
-      - src: /albums/trip-2024/b.jpg
-        caption: 足跡
-      - src: /albums/trip-2024/c.jpg
-        caption: 海藻
-  - slug: family-only
-    title: 家族限定 — 宿での夜更け話
-    layout: two-grid
-    gateHash: <sha256-hex>
-    gateHint: 家族の合言葉
-    photos:
-      - src: /albums/trip-2024/room.jpg
-        caption: 和室にて
-      - src: /albums/trip-2024/snacks.jpg
-        caption: 差し入れのお菓子
+## 📂 ディレクトリ構成（MVP）
+
+```
+site/
+  content/
+    cards/                  # 公開用
+      2025-09-02/
+        index.md
+        photo.jpg
+    private/
+      cards/                # 非公開用
+        2025-09-03/
+          index.md
+          photo.jpg
 ```
 
-## レイアウト詳細（必要枚数・生成ショートコード）
+- **1 日 1 枚前提** → ディレクトリ名は `YYYY-MM-DD`
+- 同一構造で `cards/` or `private/cards/` に置き分けるだけで公開/非公開を切替可能
 
-- one: 1枚 +（任意で本文）
-  - 必要枚数: 1
-  - 生成: `{{< photo src="…" width="wide" >}}` + 本文
+---
 
-- two-grid: 2枚を等幅で横並び
-  - 必要枚数: 2
-  - 生成: `{{< grid cols="2" >}}` の中に `photo`×2
+## 🎨 表現仕様（ポストカード短コード）
 
-- three-grid: 3枚を等幅で横並び
-  - 必要枚数: 3
-  - 生成: `{{< grid cols="3" >}}` の中に `photo`×3
+### ショートコード `postcard`
 
-- four-grid: 4枚を等幅で横並び
-  - 必要枚数: 4
-  - 生成: `{{< grid cols="4" >}}` の中に `photo`×4
+- **パラメータ**:
 
-- spread-left: 見開き（左に画像、右に本文）
-  - 必要枚数: 1
-  - 生成: `{{< spread image="…" side="left" >}}本文{{< /spread >}}`
+  - `photo`: 表示画像
+  - `title`: 見出し
+  - `body`: 本文（Markdown 可）
+  - `footer`: 日付や場所など
+  - `ratio`: 1080x1350（標準） / 1200x1200
+  - `pad`: none|sm|md|lg
 
-- spread-right: 見開き（右に画像、左に本文）
-  - 必要枚数: 1
-  - 生成: `{{< spread image="…" side="right" >}}本文{{< /spread >}}`
+### Markdown 例
 
-- gate（章全体の簡易ゲート）
-  - YAMLの章に `gateHash`/`gateHint` がある場合、章の本文全体を `{{< gate … >}}…{{< /gate >}}` でラップします。
+`site/content/private/cards/2025-09-03/index.md`
 
-注意
-- 指定より写真が少ない場合は不足分が空になります。基本は必要枚数ぴったりで記述してください。
-- 画像パスは `static/albums/<key>/` 以下に置き、`/albums/<key>/<file>` で参照してください。
+```markdown
+---
+title: "海、はじまりの一枚"
+date: 2025-09-03
+summary: "波の音と笑い声。最初の一歩。"
+---
 
-## Grid システム（CSS/ショートコード）
+{{< postcard
+photo="beach.jpg"
+title="海、はじまりの一枚"
+body="波の音と笑い声。最初の一歩だけで、一日が決まる感じ。"
+footer="2025.09.03 / 逗子"
+ratio="1080x1350"
+pad="md"
 
-- 概要: `.grid` + `.cols-N`（2/3/4）で等幅グリッドを実現。
-- 余白: `gap: 8px`（`static/css/main.css`）。
-- レスポンシブ:
-  - 640px未満では `.cols-3`/`.cols-4` は2列にフォールバック。
-- 使い方（手書き時）:
-  - `{{< grid cols="3" >}} … {{< /grid >}}` の中に `{{< photo … >}}` を並べる。
-- 写真サイズのバリエーション（`photo` の `width`）
-  - `full`（デフォルト）/`wide`/`half`/`third` のユーティリティあり。
-- モザイク（オプション）
-  - `{{< mosaic >}} {{< tile src="…" span="2x1" >}} … {{< /mosaic >}}`
-  - CSSは `.mosaic` でグリッド（6列, 自動行高）。スマホでは3列。
-  - 生成スクリプトの対象外（手作業で使いたい場合にどうぞ）。
+> }}
+```
 
-## サンプル画像の配置について
+---
 
-- 確認用のダミー画像（SVG）を追加済みです。配置先と使い方:
-  - 画像: `static/albums/trip-2024/*.svg`
-  - 参照例: `/albums/trip-2024/meet.svg`
+## 🔐 公開ポリシー
 
-## ページャ（前後リンク）のルール
+- **プライベート**: `content/private/cards/YYYY-MM-DD/` → `/private/cards/YYYY-MM-DD/`
 
-- 並びは `data/albums/<key>.yaml` の `order` を最優先（ジェネレータが章順で自動生成）。
-- 未設定の場合はファイル名順。
-- 方向: 左=前／右=次。必要なら `hugo.toml` の `params.pagerReverse = true` で反転可能。
+  - Cloudflare Access で保護（Google / OTP）。
 
-## セクション単位の限定公開（上位パスでのゲート）
+- **パブリック**: `content/cards/YYYY-MM-DD/` → `/cards/YYYY-MM-DD/`
 
-- ページ単位の `gate` ショートコードに加え、セクション（パスのまとまり）ごとに簡易ゲートをかけられます。
-- 使い方:
-  1) `gateHash` にパスフレーズの SHA-256 HEX をセット（ヒントは `gateHint`）。
-  2) セクション直下の `_index.md` に設定すると、その配下の一覧・記事詳細の表示をまとめてゲートします。
-  3) 例: `content/family/_index.md`
-     ```
-     ---
-     title: 家族用アルバム
-     gateHash: "<sha256-hex>"
-     gateHint: "家族だけが知っている合言葉"
-     ---
-     ```
-  4) 以後、`content/family/` 配下のページは同じゲートで保護されます。
+  - 誰でも閲覧可能。
 
-注意: これは静的サイト上の簡易ゲートです。実際の秘匿には Cloudflare Access などのゼロトラスト保護を併用してください。
+- 公開化は **ディレクトリを移動するだけ**。
 
-## コンテンツ構成
+---
 
-- トップ: `content/_index.md`
-- アルバム一覧: `content/albums/_index.md`
-- アルバム本体（セクション）: 例 `content/albums/trip-2024/_index.md`
-- 章（ページ）: `content/albums/trip-2024/01-prologue.md` など（`weight` で並び順）
+## 📝 ワークフロー
 
-## ショートコード
+1. その日のハイライトを選ぶ
+2. `content/private/cards/YYYY-MM-DD/` に写真と `index.md` を作成
+3. Git push → Cloudflare Pages 自動ビルド・デプロイ
+4. 家族へ URL 送信（初回は Access でログイン）
+5. 公開にしたい場合は `content/cards/` へ移動して再デプロイ
 
-例は `content/albums/trip-2024` を参照。
+---
 
-- photo
-  ```
-  {{< photo src="/albums/trip-2024/img01.jpg" alt="説明" caption="キャプション" width="full|wide|half|third" >}}
-  ```
-- grid
-  ```
-  {{< grid cols="3" >}}
-    {{< photo src="/path/a.jpg" caption="a" >}}
-    {{< photo src="/path/b.jpg" caption="b" >}}
-  {{< /grid >}}
-  ```
-- mosaic + tile
-  ```
-  {{< mosaic >}}
-    {{< tile src="/path/a.jpg" span="2x2" >}}
-    {{< tile src="/path/b.jpg" span="1x1" >}}
-  {{< /mosaic >}}
-  ```
-- spread（見開き）
-  ```
-  {{< spread image="/path/hero.jpg" side="right" caption="見開きキャプション" >}}
-  ここに本文（マークダウン可）
-  {{< /spread >}}
-  ```
-- spacer（余白）
-  ```
-  {{< spacer size="24" >}}
-  ```
-- gate（限定公開の簡易保護）
-  - 静的サイトのため本格的な認証ではありません（秘匿はできない前提）。Cloudflare Access などと併用すると堅牢です。
-  - 使い方:
-    1) ハッシュを作成（SHA-256 HEX）。macOS 例: `echo -n 'your-pass' | shasum -a 256 | cut -d' ' -f1`
-    2) `content/.../03-family-only.md` の `CHANGE_ME_TO_SHA256_HEX` を置換
-    3) 使い回す場合はパスワードは短すぎないものを推奨
-  ```
-  {{< gate hash="<sha256-hex>" hint="家族の合言葉" >}}
-    ここに守りたいコンテンツ
-  {{< /gate >}}
-  ```
+## 🚀 将来仕様（拡張）
 
-## デプロイ（Cloudflare Pages）
+- **カード PNG 化**:
 
-- 新規プロジェクト → Git 連携 → Framework preset: Hugo を選択
-- Build command: `hugo`
-- Build output directory: `public`
-- 環境変数（必要に応じて）
-  - `HUGO_VERSION`: 0.125.x など（ローカルと合わせる）
-  - `HUGO_ENV`: production
-- 限定公開は Cloudflare Access の保護ルール（Application→Access→Add）を推奨。`/albums/*` などパス単位で制御可能。
+  - Cloudflare Workers or CLI で URL→PNG レンダリング
 
-## カスタマイズの入口
+- **自動生成**:
 
-- サイト設定: `hugo.toml`
-- スタイル: `static/css/main.css`
-- ベースレイアウト: `layouts/_default/baseof.html`
-- ナビ/フッタ: 同上内のマークアップ
-- ショートコード: `layouts/shortcodes/*.html`
+  - `config/daily.yaml` から `slowfolio-cli` が `index.md` を吐く
 
-## 留意事項
+- **アーカイブ**:
 
-- このレポジトリの `gate` は**簡易**（ソースから見えます）。真正な秘匿には ID プロバイダ（Cloudflare Access 等）を使ってください。
-- 画像のサイズ最適化やサムネイル生成は未実装。必要なら今後 Hugo Pipes でのリサイズ機能を追加可能です。
+  - 月別/年別一覧ページの自動生成
+
+- **テーマ**:
+
+  - 色・フォントを選べる（今は落ち着いたベーシック）
+
+---
+
+## ✅ 受け入れ条件
+
+- 1 日 1 カードが **Markdown ＋写真**で作成できる
+- `/private/cards/YYYY-MM-DD/` はログインしないと閲覧不可
+- `/cards/YYYY-MM-DD/` は誰でも閲覧可能
+- スマホで開いたとき、**1 スクショでカードが綺麗に収まる**
+
+---
+
+これで「slowfolio = 毎日 1 枚のポストカードを積み上げる場所」という軸が明確になります。
+📌 将来的な柔軟性は残しつつ、MVP では **“日々の 1 枚”** にフォーカスしてシンプルに始める形です。

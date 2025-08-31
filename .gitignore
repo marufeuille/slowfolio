@@ -31,3 +31,4 @@ tmp/
 content/albums/*/*.md
 # - Generated album order data
 data/albums/
+content/

@@ -1,0 +1,37 @@
+{{/* params:
+photo, title, body, footer,
+ratio(insta|square|l), pad,
+fit(cover|contain)=cover, focus(center|top|bottom|left|right)=center, bg(hex|css)=#fff
+*/}}
+
+{{ $ph := .Get "photo" }}
+{{ $img := .Page.Resources.GetMatch $ph }}
+
+{{ if not $img }}
+<div class="notice">
+    <strong>Image not found:</strong> {{ $ph }}<br>
+    <small>画像は <code>index.md</code> と同じフォルダ（ページバンドル）に置いてください。</small>
+</div>
+{{ else }}
+{{ $ratio := .Get "ratio" | default "insta" }}
+{{ $class := cond (eq $ratio "square") "card-1200x1200" (cond (eq $ratio "l") "card-3x2" "card-1080x1350") }}
+{{ $pad := .Get "pad" | default "md" }}
+{{ $fit := .Get "fit" | default "cover" }} {{/* cover or contain */}}
+{{ $focus := .Get "focus" | default "center" }} {{/* 視点: center/top/bottom/left/right */}}
+{{ $bg := .Get "bg" | default "#fff" }}
+
+{{/* 画像のリサイズ（縦横⻑辺2000px以内）: トリミングなし */}}
+{{ $resized := $img.Fit "2000x2000" }}
+
+<div class="card {{ $class }} pad-{{ $pad }}">
+    <div class="card-photo" style="background: {{ $bg }};">
+        <img loading="lazy" src="{{ $resized.RelPermalink }}" alt="" class="{{ if eq $fit " contain" }}contain{{ else
+            }}cover{{ end }}" style="object-position: {{ $focus }};">
+    </div>
+    <div class="card-body">
+        {{ with .Get "title" }}<h2>{{ . }}</h2>{{ end }}
+        {{ with .Get "body" }}<p>{{ . | markdownify }}</p>{{ end }}
+        {{ with .Get "footer" }}<div class="card-footer">{{ . }}</div>{{ end }}
+    </div>
+</div>
+{{ end }}

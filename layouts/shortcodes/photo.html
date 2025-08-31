@@ -1,9 +1,0 @@
-{{/* Usage: {{< photo src="/albums/trip-2024/img01.jpg" alt="説明" caption="キャプション" width="full|wide|half|third" >}} */}}
-{{ $src := .Get "src" }}
-{{ $alt := .Get "alt" | default "" }}
-{{ $caption := .Get "caption" }}
-{{ $width := .Get "width" | default "full" }}
-<figure class="photo photo--{{ $width }}">
-  <img src="{{ $src }}" alt="{{ $alt }}" loading="lazy"/>
-  {{ with $caption }}<figcaption>{{ . }}</figcaption>{{ end }}
-</figure>

@@ -1,0 +1,9 @@
+{{/* params: src, note, tape(true|false), ratio(4x3|1x1|3x4|free) */}}
+{{ $img := .Page.Resources.GetMatch (.Get "src") }}
+{{ $ratio := .Get "ratio" | default "free" }}
+<figure class="sph {{ if eq (.Get " tape") "true" }}tape{{ end }}">
+    <div class="sph-box {{ if ne $ratio " free" }}r-{{ $ratio }}{{ end }}">
+        <img src="{{ ($img.Fit " 2000x2000").RelPermalink }}" alt="">
+    </div>
+    {{ with .Get "note" }}<figcaption>{{ . }}</figcaption>{{ end }}
+</figure>
